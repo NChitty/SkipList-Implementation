@@ -8,10 +8,18 @@ public class SkipListMain {
 
     public class SkipListSet<T> implements SortedSet<T> {
         private T[][] header;
+        private int height;
 
         public SkipListSet() {
             super();
-            
+            this.height = 16;
+            header = new T[height][height];
+        }
+
+        public SkipListSet(int height) {
+            super();
+            this.height = height;
+            header = new T[height][height];
         }
 
 		@Override
