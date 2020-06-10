@@ -1,13 +1,15 @@
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Random;
 import java.util.SortedSet;
 
 public class SkipListMain {
 
-	public class SkipListSet<T extends Comparable<T>> implements SortedSet<T> {
+	public class SkipListSet<T extends Comparable> implements SortedSet<T> {
 
 		private SkipListNode<T> head;
 		private int size = 0;
@@ -31,7 +33,7 @@ public class SkipListMain {
 			//while we are not on the bottom level
 			while(current.down != null) {
 				//check next element on this level exists
-				if(current.right.element != null) {
+				if(current.right != null) {
 					//if this level's element is less than the element we are inserting, move right
 					if(current.right.element.compareTo(arg0) < 0) {
 						current = current.right;
@@ -68,26 +70,58 @@ public class SkipListMain {
 
 		@Override
 		public boolean contains(Object arg0) {
-			// TODO Auto-generated method stub
+			SkipListNode<T> current = head.top();
+			while(current.down != null) {
+				//check if there is a node to the right
+				if(current.right != null) {
+					//if the element to the right is less the the element we are searching for move right
+					if(current.right.element.compareTo(arg0) < 0) {
+						current = current.right;
+						continue; //do not move down
+					} else if (current.right.element.compareTo(arg0) == 0)
+						return true; //compareTo returned 0 so we found it
+				}
+				//there was not a node to the right or it was greater so we move down
+				current = current.down;
+			}
 			return false;
 		}
 
+		/**
+		 * Basically do all the elements in this collection reside in <code>arg0</code>
+		 * In other words, is my set a subset of the collection
+		 * @param arg0
+		 */
 		@Override
 		public boolean containsAll(Collection<?> arg0) {
-			// TODO Auto-generated method stub
-			return false;
+			for(T a : this)
+				if(!arg0.contains(a)) return false;
+			return true;
 		}
 
 		@Override
 		public boolean isEmpty() {
-			// TODO Auto-generated method stub
-			return false;
+			return size == 0;
 		}
 
 		@Override
 		public Iterator<T> iterator() {
-			// TODO Auto-generated method stub
-			return null;
+			Iterator<T> retVal = new Iterator<T>() {
+
+				SkipListNode<T> current = head.bottom(); //we want the bottom layer to get all the elements
+
+				@Override
+				public boolean hasNext() {
+					return current.right != null; //if the right node is null then there is nothing to go to
+				}
+
+				@Override
+				public T next() {
+					current = current.right; //move the cursor to the right
+					return current.element; //return the current element
+				}
+			};
+			return retVal;
 		}
 
 		@Override
@@ -115,14 +149,19 @@ public class SkipListMain {
 
 		@Override
 		public Object[] toArray() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public <T> T[] toArray(T[] arg0) {
-			// TODO Auto-generated method stub
-			return null;
+			T[] retVal = Arrays.copyOf(arg0, size);
+			int i = 0;
+			Iterator iterator = this.iterator();
+			while(iterator.hasNext()) {
+				retVal[i] = (T) iterator.next();
+				i++;
+			}
+			return retVal;
 		}
 
 		@Override
@@ -133,8 +172,7 @@ public class SkipListMain {
 
 		@Override
 		public T first() {
-			// TODO Auto-generated method stub
-			return null;
+			return head.bottom().right.element;
 		}
 
 		@Override
