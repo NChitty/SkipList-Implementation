@@ -1,6 +1,8 @@
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.SortedSet;
 
 public class SkipListMain {
@@ -9,6 +11,7 @@ public class SkipListMain {
 
 		private SkipListNode<T> head;
 		private int size = 0;
+		private final SecureRandom random = new SecureRandom();
 
 		public SkipListSet(int height) {
 			this.head = (new SkipListNode<T>(height)).top();
@@ -33,25 +36,34 @@ public class SkipListMain {
 					if(current.right.element.compareTo(arg0) < 0) {
 						current = current.right;
 						continue; //we dont want to move down after moving right
+					} else if(current.right.element.compareTo(arg0) == 0) {
+						//we want to move down and add after this element
+						current = current.right.down;
+						continue;
 					}
 				}
 				//the next element to the right is either null or greater than the insertion so we move down
 				current = current.down;
 			}
-			SkipListNode<T> newNode = new SkipListNode<T>();
-			return false;
+			//Create the new node, the constructor handles the rest
+			new SkipListNode<T>(1 + this.randomHeight(), current, current.right, arg0);
+			return true;
 		}
 
 		@Override
 		public boolean addAll(Collection<? extends T> arg0) {
-			// TODO Auto-generated method stub
-			return false;
+			for(T o : arg0)
+				this.add(o);
+			return true;
 		}
 
 		@Override
 		public void clear() {
-			// TODO Auto-generated method stub
-
+			SkipListNode<T> current = head.top();
+			while(current.down != null) {
+				current.right = null;
+				current = current.down;
+			}
 		}
 
 		@Override
@@ -149,6 +161,17 @@ public class SkipListMain {
 			return null;
 		}
 
+		private int randomHeight() {
+			int range = Integer.MAX_VALUE % head.height;
+			int randNum = random.nextInt() % head.height;
+			int valToReturn = 0;
+			while(randNum > range/2) {
+				valToReturn++;
+				randNum -= (range/2);
+				range /= 2;
+			}
+			return valToReturn;
+		}
 	}
 
 	public class SkipListNode<T> {
@@ -186,6 +209,9 @@ public class SkipListMain {
 			this.right = right;
 			this.element = element;
 			this.buildStack();
+			//change the left and right stacks to point to this node
+			left.right = this;
+			right.left = this;
 		}
 
 		/**
